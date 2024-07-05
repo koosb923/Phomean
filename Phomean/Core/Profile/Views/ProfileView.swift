@@ -8,6 +8,10 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @State private var selectionFilter: TweetFilterViewModel = .tweets
+    @Environment(\.presentationMode) var mode
+    @Namespace var animation
+    
     var body: some View {
         VStack(alignment: .leading) {
             
@@ -17,10 +21,13 @@ struct ProfileView: View {
             
             userInfoDetails
             
-            .padding(EdgeInsets(top: 8, leading: 16, bottom: 0, trailing: 16))
+            tweetFilterBar
+            
+            tweetsView
             
             Spacer()
         }
+        .edgesIgnoringSafeArea(.bottom)
     }
 }
 
@@ -41,7 +48,7 @@ extension ProfileView {
                 .ignoresSafeArea()
             VStack(spacing: 8){
                 Button{
-                    
+                    mode.wrappedValue.dismiss()
                 } label: {
                     Image(systemName: "arrow.left")
                         .resizable()
@@ -116,26 +123,51 @@ extension ProfileView {
             .font(.caption)
             .foregroundColor(Color(.gray))
             
-            HStack(spacing: 24){
-                HStack{
-                    Text("324")
-                        .bold()
-                    Text("팔로잉")
-                        .font(.caption)
-                        .foregroundColor(Color(.gray))
+            UserStatsView()
+                .padding(.vertical)
+            
+        }
+        .padding(EdgeInsets(top: 8, leading: 16, bottom: 0, trailing: 16))
+        
+    }
+    
+    var tweetFilterBar: some View {
+        HStack {
+            ForEach(TweetFilterViewModel.allCases, id:\.rawValue) { item in
+                VStack {
+                    Text(item.title)
+                        .font(.subheadline)
+                        .fontWeight(selectionFilter == item ? .semibold : .regular)
+                        .foregroundColor(selectionFilter == item ? .black : .gray)
+                    
+                    if selectionFilter == item {
+                        Capsule()
+                            .foregroundColor(Color(.systemBlue))
+                            .frame(height: 3)
+                            .matchedGeometryEffect(id: "filter", in: animation)
+                    } else {
+                        Capsule()
+                            .foregroundColor(Color(.clear))
+                            .frame(height: 3)
+                    }
                 }
-                
-                HStack {
-                    Text("324")
-                        .bold()
-                    Text("팔로우")
-                        .font(.caption)
-                        .foregroundColor(Color(.gray))
+                .onTapGesture {
+                    withAnimation(.easeInOut) {
+                        self.selectionFilter = item
+                    }
                 }
             }
-            .padding(.vertical)
-        
         }
-        
+        .overlay(Divider().offset(x:0, y:16))
+    }
+    
+    var tweetsView: some View {
+        ScrollView {
+            LazyVStack {
+                ForEach(0...9, id:\.self) { _ in
+                    TweetRowView()
+                }
+            }
+        }
     }
 }
